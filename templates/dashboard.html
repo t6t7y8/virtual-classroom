@@ -1,0 +1,148 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Header -->
+<div class="flex justify-between items-center mb-8">
+    <div>
+        <h1 class="text-4xl font-bold">Welcome, {{ session.profile.full_name }} 👋</h1>
+        <p class="text-gray-400 mt-1">
+            {% if role == 'teacher' %}Manage your classrooms{% else %}Your learning space{% endif %}
+        </p>
+    </div>
+    {% if role == 'teacher' %}
+    <button onclick="document.getElementById('createModal').classList.remove('hidden')" 
+            class="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:scale-105 transition transform">
+        <i class="fas fa-plus mr-2"></i>New Classroom
+    </button>
+    {% endif %}
+</div>
+
+{% if role == 'student' %}
+
+    <!-- MY CLASSES Section -->
+    <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <i class="fas fa-book-reader text-primary mr-3"></i>My Classes
+        <span class="ml-3 text-sm font-normal text-gray-400">({{ classrooms|length }})</span>
+    </h2>
+    
+    {% if classrooms %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
+            {% for classroom in classrooms %}
+            <div class="glass rounded-2xl p-6 hover:scale-[1.02] transition transform animate-fade-in">
+                <a href="{{ url_for('classroom', classroom_id=classroom.id) }}" class="block mb-4">
+                    <div class="flex items-center justify-between mb-4">
+                        <i class="fas fa-chalkboard-teacher text-3xl text-primary"></i>
+                        <span class="text-xs px-3 py-1 rounded-full bg-green-500/20 text-green-300">Enrolled</span>
+                    </div>
+                    <h3 class="text-xl font-semibold mb-2">{{ classroom.name }}</h3>
+                    <p class="text-gray-400 text-sm">{{ classroom.description or 'No description' }}</p>
+                </a>
+                <form method="POST" action="{{ url_for('unenroll', classroom_id=classroom.id) }}" 
+                      onsubmit="return confirm('Leave this classroom?')">
+                    <button type="submit" 
+                            class="w-full mt-2 py-2 rounded-lg bg-red-500/10 text-red-300 hover:bg-red-500/20 text-sm transition">
+                        <i class="fas fa-sign-out-alt mr-1"></i>Leave Class
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass rounded-2xl p-12 text-center mb-12 animate-fade-in">
+            <i class="fas fa-inbox text-6xl text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">No classes yet</h3>
+            <p class="text-gray-400">Browse available classrooms below to join one!</p>
+        </div>
+    {% endif %}
+
+    <!-- AVAILABLE CLASSROOMS Section -->
+    <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <i class="fas fa-compass text-secondary mr-3"></i>Browse Classrooms
+        <span class="ml-3 text-sm font-normal text-gray-400">({{ available_classrooms|length }})</span>
+    </h2>
+    
+    {% if available_classrooms %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for classroom in available_classrooms %}
+            <div class="glass rounded-2xl p-6 hover:scale-[1.02] transition transform animate-fade-in border border-secondary/20">
+                <div class="flex items-center justify-between mb-4">
+                    <i class="fas fa-chalkboard text-3xl text-secondary"></i>
+                    <span class="text-xs px-3 py-1 rounded-full bg-secondary/20 text-secondary">Available</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">{{ classroom.name }}</h3>
+                <p class="text-gray-400 text-sm mb-4">{{ classroom.description or 'No description' }}</p>
+                {% if classroom.profiles %}
+                <p class="text-xs text-gray-500 mb-4">
+                    <i class="fas fa-user-tie mr-1"></i>Teacher: {{ classroom.profiles.full_name }}
+                </p>
+                {% endif %}
+                <form method="POST" action="{{ url_for('enroll', classroom_id=classroom.id) }}">
+                    <button type="submit" 
+                            class="w-full py-2 rounded-lg gradient-bg text-white font-semibold hover:opacity-90 transition">
+                        <i class="fas fa-plus-circle mr-1"></i>Enroll
+                    </button>
+                </form>
+            </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass rounded-2xl p-12 text-center animate-fade-in">
+            <i class="fas fa-search text-6xl text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">No classrooms available</h3>
+            <p class="text-gray-400">Check back later — teachers haven't created any classes yet.</p>
+        </div>
+    {% endif %}
+
+{% else %}
+
+    <!-- TEACHER VIEW -->
+    <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <i class="fas fa-chalkboard-teacher text-primary mr-3"></i>My Classrooms
+    </h2>
+    
+    {% if classrooms %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            {% for classroom in classrooms %}
+            <a href="{{ url_for('classroom', classroom_id=classroom.id) }}" 
+               class="glass rounded-2xl p-6 hover:scale-105 transition transform block animate-fade-in">
+                <div class="flex items-center justify-between mb-4">
+                    <i class="fas fa-chalkboard-teacher text-3xl text-primary"></i>
+                    <span class="text-xs px-3 py-1 rounded-full bg-primary/20 text-primary">Active</span>
+                </div>
+                <h3 class="text-xl font-semibold mb-2">{{ classroom.name }}</h3>
+                <p class="text-gray-400 text-sm">{{ classroom.description or 'No description' }}</p>
+            </a>
+            {% endfor %}
+        </div>
+    {% else %}
+        <div class="glass rounded-2xl p-12 text-center animate-fade-in">
+            <i class="fas fa-chalkboard text-6xl text-gray-600 mb-4"></i>
+            <h3 class="text-xl font-semibold mb-2">No classrooms yet</h3>
+            <p class="text-gray-400">Click "New Classroom" to create your first class!</p>
+        </div>
+    {% endif %}
+
+{% endif %}
+
+<!-- Create Classroom Modal (for teachers) -->
+{% if role == 'teacher' %}
+<div id="createModal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50">
+    <div class="glass rounded-2xl p-8 w-full max-w-md animate-fade-in">
+        <h2 class="text-2xl font-bold mb-6">Create Classroom</h2>
+        <form method="POST" action="{{ url_for('create_classroom') }}">
+            <input type="text" name="name" placeholder="Classroom Name" required 
+                   class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white">
+            <textarea name="description" placeholder="Description" 
+                      class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white"></textarea>
+            <div class="flex space-x-4">
+                <button type="button" onclick="document.getElementById('createModal').classList.add('hidden')" 
+                        class="flex-1 py-3 rounded-xl glass hover:bg-white/10 transition">Cancel</button>
+                <button type="submit" 
+                        class="flex-1 py-3 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">Create</button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

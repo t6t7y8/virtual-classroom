@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+<div class="mb-8">
+    <h1 class="text-4xl font-bold mb-2">{{ classroom.name }}</h1>
+    <p class="text-gray-400">{{ classroom.description }}</p>
+</div>
+
+<!-- Tabs -->
+<div class="flex space-x-4 mb-6 border-b border-white/10 pb-2">
+    <button onclick="showTab('chat')" class="tab-btn px-6 py-2 rounded-t-lg font-semibold text-primary border-b-2 border-primary">Chat</button>
+    <button onclick="showTab('announcements')" class="tab-btn px-6 py-2 rounded-t-lg font-semibold text-gray-400 hover:text-white">Announcements</button>
+    <button onclick="showTab('assignments')" class="tab-btn px-6 py-2 rounded-t-lg font-semibold text-gray-400 hover:text-white">Assignments</button>
+</div>
+
+<!-- Chat Tab -->
+<div id="chat-tab" class="tab-content">
+    <div class="glass rounded-2xl p-6 h-[60vh] flex flex-col">
+        <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 space-y-3">
+            {% for msg in messages %}
+            <div class="flex items-start space-x-3 animate-fade-in">
+                <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-xs font-bold">
+                    {{ msg.profiles.full_name[0] }}
+                </div>
+                <div>
+                    <div class="flex items-center space-x-2">
+                        <span class="font-semibold text-sm">{{ msg.profiles.full_name }}</span>
+                        <span class="text-xs text-gray-500">{{ msg.created_at[11:16] }}</span>
+                    </div>
+                    <p class="text-gray-300">{{ msg.content }}</p>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        <div class="flex space-x-3">
+            <input type="text" id="message-input" placeholder="Type a message..." class="flex-1 p-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-primary text-white">
+            <button onclick="sendMessage()" class="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">
+                <i class="fas fa-paper-plane"></i>
+            </button>
+        </div>
+    </div>
+</div>
+
+<!-- Announcements Tab -->
+<div id="announcements-tab" class="tab-content hidden">
+    {% if session.profile.role == 'teacher' %}
+    <form method="POST" action="{{ url_for('post_announcement', classroom_id=classroom.id) }}" class="glass rounded-2xl p-6 mb-6">
+        <textarea name="content" placeholder="Post an announcement..." required class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white"></textarea>
+        <button type="submit" class="px-6 py-2 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">Post</button>
+    </form>
+    {% endif %}
+    <div class="space-y-4">
+        {% for ann in announcements %}
+        <div class="glass rounded-2xl p-6 animate-fade-in">
+            <div class="flex justify-between items-start mb-2">
+                <span class="font-semibold">{{ ann.profiles.full_name }}</span>
+                <span class="text-xs text-gray-500">{{ ann.created_at[:10] }}</span>
+            </div>
+            <p class="text-gray-300">{{ ann.content }}</p>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Assignments Tab -->
+<div id="assignments-tab" class="tab-content hidden">
+    {% if session.profile.role == 'teacher' %}
+    <form method="POST" action="{{ url_for('create_assignment', classroom_id=classroom.id) }}" class="glass rounded-2xl p-6 mb-6">
+        <input type="text" name="title" placeholder="Assignment Title" required class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white">
+        <textarea name="description" placeholder="Description" class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white"></textarea>
+        <input type="datetime-local" name="due_date" class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white">
+        <button type="submit" class="px-6 py-2 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">Create</button>
+    </form>
+    {% endif %}
+    <div class="space-y-4">
+        {% for assign in assignments %}
+        <div class="glass rounded-2xl p-6 animate-fade-in">
+            <h3 class="text-xl font-semibold mb-2">{{ assign.title }}</h3>
+            <p class="text-gray-400 text-sm mb-3">{{ assign.description }}</p>
+            <span class="text-xs px-3 py-1 rounded-full bg-secondary/20 text-secondary">
+                Due: {{ assign.due_date[:10] if assign.due_date else 'No due date' }}
+            </span>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<script>
+    // Tab switching
+    function showTab(tab) {
+        document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+        document.querySelectorAll('.tab-btn').forEach(el => {
+            el.classList.remove('text-primary', 'border-primary', 'border-b-2');
+            el.classList.add('text-gray-400');
+        });
+        document.getElementById(tab + '-tab').classList.remove('hidden');
+        event.target.classList.add('text-primary', 'border-primary', 'border-b-2');
+        event.target.classList.remove('text-gray-400');
+    }
+
+    // Socket.IO for real-time chat
+    const socket = io();
+    const room = "{{ classroom.id }}";
+    const userName = "{{ session.profile.full_name }}";
+
+    socket.on('connect', () => {
+        socket.emit('join', { room: room });
+    });
+
+    socket.on('receive_message', (data) => {
+        const chatMessages = document.getElementById('chat-messages');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'flex items-start space-x-3 animate-fade-in';
+        msgDiv.innerHTML = `
+            <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-xs font-bold">
+                ${data.user[0]}
+            </div>
+            <div>
+                <div class="flex items-center space-x-2">
+                    <span class="font-semibold text-sm">${data.user}</span>
+                    <span class="text-xs text-gray-500">${data.timestamp}</span>
+                </div>
+                <p class="text-gray-300">${data.message}</p>
+            </div>
+        `;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+    function sendMessage() {
+        const input = document.getElementById('message-input');
+        const message = input.value.trim();
+        if (message) {
+            socket.emit('send_message', { room: room, message: message });
+            input.value = '';
+        }
+    }
+
+    document.getElementById('message-input').addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') sendMessage();
+    });
+</script>
+{% endblock %}

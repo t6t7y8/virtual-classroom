@@ -1,0 +1,6 @@
+Flask
+supabase
+python-dotenv
+flask-socketio
+gunicorn
+eventlet

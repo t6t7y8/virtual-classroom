@@ -1,0 +1,94 @@
+{% extends "auth_base.html" %}
+{% block content %}
+
+<div class="glass max-w-5xl w-full rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl animate-fade-in border border-white/10">
+    
+    <!-- Left Side: Register Form -->
+    <div class="md:w-1/2 p-10 md:p-14 flex flex-col justify-center bg-gray-900/50">
+        <h2 class="text-3xl font-bold mb-2 text-white">Create Account</h2>
+        <p class="text-gray-400 mb-8">Join the virtual classroom and start learning today.</p>
+
+        <form method="POST" action="{{ url_for('register') }}" class="space-y-5">
+            <!-- Full Name -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Full Name</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-user text-gray-500"></i>
+                    </div>
+                    <input type="text" name="full_name" required placeholder="John Doe"
+                           class="input-field pl-12">
+                </div>
+            </div>
+
+            <!-- Email -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Email Address</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-envelope text-gray-500"></i>
+                    </div>
+                    <input type="email" name="email" required placeholder="you@example.com"
+                           class="input-field pl-12">
+                </div>
+            </div>
+
+            <!-- Password -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Password</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-lock text-gray-500"></i>
+                    </div>
+                    <input type="password" name="password" required placeholder="Create a strong password"
+                           class="input-field pl-12">
+                </div>
+            </div>
+
+            <!-- Account Type -->
+            <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">I am a...</label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-user-tag text-gray-500"></i>
+                    </div>
+                    <select name="role" class="input-field pl-12 appearance-none bg-gray-900/50 cursor-pointer">
+                        <option value="student" class="bg-gray-900">Student</option>
+                        <option value="teacher" class="bg-gray-900">Teacher</option>
+                    </select>
+                    <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
+                        <i class="fas fa-chevron-down text-gray-500"></i>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Submit Button -->
+            <button type="submit" 
+                    class="w-full py-4 rounded-xl gradient-bg text-white font-semibold text-lg hover:opacity-90 hover:scale-[1.02] transition transform duration-300 shadow-lg shadow-primary/30 mt-4">
+                <i class="fas fa-rocket mr-2"></i>Create Account
+            </button>
+        </form>
+
+        <p class="text-center text-gray-400 mt-6">
+            Already have an account? 
+            <a href="{{ url_for('login') }}" class="text-primary hover:text-secondary font-semibold transition">Log in here</a>
+        </p>
+    </div>
+
+    <!-- Right Side: Branding & Visuals -->
+    <div class="md:w-1/2 gradient-bg p-12 flex flex-col justify-center items-center text-center relative overflow-hidden order-first md:order-last">
+        <!-- Decorative circles -->
+        <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
+        <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-black/20 rounded-full blur-2xl"></div>
+        
+        <div class="relative z-10">
+            <div class="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
+                <i class="fas fa-users text-4xl text-white"></i>
+            </div>
+            <h1 class="text-4xl font-bold text-white mb-4">Join EduSpace</h1>
+            <p class="text-white/80 text-lg">Connect, collaborate, and learn in a beautiful real-time environment.</p>
+        </div>
+    </div>
+
+</div>
+{% endblock %}

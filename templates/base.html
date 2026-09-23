@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Classroom</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#6366f1',
+                        secondary: '#8b5cf6',
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                }
+            }
+        }
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    </style>
+</head>
+<body class="bg-gray-900 text-gray-100 min-h-screen">
+    <!-- Navigation -->
+    <nav class="glass sticky top-0 z-50 px-6 py-4">
+        <div class="container mx-auto flex justify-between items-center">
+            <a href="{{ url_for('index') }}" class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
+                <i class="fas fa-graduation-cap mr-2"></i>EduSpace
+            </a>
+            <div class="flex items-center space-x-4">
+                {% if session.user %}
+                    <span class="text-gray-300">{{ session.profile.full_name }}</span>
+                    <a href="{{ url_for('logout') }}" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">Logout</a>
+                {% else %}
+                    <a href="{{ url_for('login') }}" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Login</a>
+                    <a href="{{ url_for('register') }}" class="px-4 py-2 rounded-lg gradient-bg text-white hover:opacity-90 transition">Sign Up</a>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Flash Messages -->
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            <div class="container mx-auto px-4 mt-4">
+                {% for category, message in messages %}
+                    <div class="glass rounded-lg p-4 mb-2 animate-fade-in 
+                        {% if category == 'success' %}border-l-4 border-green-500 text-green-300
+                        {% elif category == 'danger' %}border-l-4 border-red-500 text-red-300
+                        {% elif category == 'warning' %}border-l-4 border-yellow-500 text-yellow-300
+                        {% else %}border-l-4 border-blue-500 text-blue-300{% endif %}">
+                        {{ message }}
+                    </div>
+                {% endfor %}
+            </div>
+        {% endif %}
+    {% endwith %}
+
+    <!-- Main Content -->
+    <main class="container mx-auto px-4 py-8">
+        {% block content %}{% endblock %}
+    </main>
+
+    <script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>

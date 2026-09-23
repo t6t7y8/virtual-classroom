@@ -1,0 +1,91 @@
+{% extends "base.html" %}
+
+{% block title %}
+{{ assignment.title }} - Virtual Classroom
+{% endblock %}
+
+{% block content %}
+
+<div class="assignment-detail">
+
+    <div class="assignment-header">
+
+        <span class="badge">
+            Assignment
+        </span>
+
+        <h1>
+            {{ assignment.title }}
+        </h1>
+
+        {% if classroom %}
+
+            <p>
+                Classroom:
+                <strong>
+                    {{ classroom.name }}
+                </strong>
+            </p>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="assignment-content">
+
+        <h2>
+            Description
+        </h2>
+
+        <p>
+            {{ assignment.description or
+            "No description was provided." }}
+        </p>
+
+
+        {% if assignment.due_date %}
+
+            <div class="due-date">
+
+                <strong>
+                    Due Date:
+                </strong>
+
+                {{ assignment.due_date }}
+
+            </div>
+
+        {% endif %}
+
+    </div>
+
+
+    <div class="assignment-actions">
+
+        <a
+            href="{{ url_for('dashboard') }}"
+            class="btn btn-secondary"
+        >
+            Back to Dashboard
+        </a>
+
+        {% if classroom %}
+
+            <a
+                href="{{ url_for(
+                    'classroom',
+                    classroom_id=classroom.id
+                ) }}"
+                class="btn"
+            >
+                Back to Classroom
+            </a>
+
+        {% endif %}
+
+    </div>
+
+</div>
+
+{% endblock %}
