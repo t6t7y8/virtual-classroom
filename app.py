@@ -26,7 +26,7 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.environ.get("SECRET_KEY")
-# Using threading mode to avoid deprecated eventlet warnings
+# Using threading mode to work with gunicorn gthread worker on Render
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
 # ============================================================
@@ -35,7 +35,7 @@ socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 url: str = os.environ.get("SUPABASE_URL")
 key: str = os.environ.get("SUPABASE_KEY")
 
-# Clean the URL and key
+# Clean the URL and key (removes quotes, spaces, trailing slashes)
 if url:
     url = url.strip().strip("'").strip('"')
     if url.endswith("/"):
@@ -371,7 +371,7 @@ def handle_message(data):
 
 
 # ============================================================
-# 🚀 RUN
+# 🚀 RUN (Only used for local development)
 # ============================================================
 if __name__ == '__main__':
-    socketio.run(app, debug=True, port=5001)
+    socketio.run(app, debug=True, port=5001, allow_unsafe_werkzeug=True)
