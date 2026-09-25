@@ -56,7 +56,7 @@ supabase: Client = create_client(url, key)
 
 
 # ============================================================
-# 🔐 AUTHENTICATION DECORATOR
+# 🔐 AUTHENTICATION DECORATORS
 # ============================================================
 def login_required(f):
     @wraps(f)
@@ -64,6 +64,19 @@ def login_required(f):
         if 'user' not in session:
             flash('Please log in to access this page.', 'warning')
             return redirect(url_for('login'))
+        return f(*args, **kwargs)
+    return decorated_function
+
+
+def admin_required(f):
+    @wraps(f)
+    def decorated_function(*args, **kwargs):
+        if 'user' not in session:
+            flash('Please log in to access this page.', 'warning')
+            return redirect(url_for('login'))
+        if session.get('profile', {}).get('role') != 'admin':
+            flash('Access denied. Admins only.', 'danger')
+            return redirect(url_for('dashboard'))
         return f(*args, **kwargs)
     return decorated_function
 
@@ -326,6 +339,82 @@ def create_assignment(classroom_id):
         flash(f'Error: {str(e)}', 'danger')
 
     return redirect(url_for('classroom', classroom_id=classroom_id))
+
+
+# ============================================================
+# 🛡️ ADMIN PORTAL (Super Admin only)
+# ============================================================
+@app.route('/admin')
+@admin_required
+def admin_portal():
+    # Fetch all users
+    users = supabase.table('profiles').select('*').order('role').execute()
+
+    # Fetch all classrooms with teacher info
+    classrooms = supabase.table('classrooms').select('*, profiles(full_name)').order('created_at', desc=True).execute()
+
+    # Fetch stats
+    messages_count = supabase.table('messages').select('id', count='exact').execute()
+    enrollments_count = supabase.table('enrollments').select('id', count='exact').execute()
+
+    # Count roles
+    role_counts = {}
+    for u in users.data:
+        r = u.get('role', 'unknown')
+        role_counts[r] = role_counts.get(r, 0) + 1
+
+    stats = {
+        'total_users': len(users.data),
+        'total_classrooms': len(classrooms.data),
+        'total_messages': messages_count.count or 0,
+        'total_enrollments': enrollments_count.count or 0,
+        'teachers': role_counts.get('teacher', 0),
+        'students': role_counts.get('student', 0),
+        'admins': role_counts.get('admin', 0),
+    }
+
+    return render_template('admin.html',
+                         users=users.data,
+                         classrooms=classrooms.data,
+                         stats=stats)
+
+
+@app.route('/admin/delete_user/<user_id>', methods=['POST'])
+@admin_required
+def admin_delete_user(user_id):
+    try:
+        supabase.table('profiles').delete().eq('id', user_id).execute()
+        flash('User deleted successfully.', 'success')
+    except Exception as e:
+        flash(f'Error deleting user: {str(e)}', 'danger')
+    return redirect(url_for('admin_portal'))
+
+
+@app.route('/admin/delete_classroom/<int:classroom_id>', methods=['POST'])
+@admin_required
+def admin_delete_classroom(classroom_id):
+    try:
+        supabase.table('classrooms').delete().eq('id', classroom_id).execute()
+        flash('Classroom deleted.', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+    return redirect(url_for('admin_portal'))
+
+
+@app.route('/admin/change_role/<user_id>', methods=['POST'])
+@admin_required
+def admin_change_role(user_id):
+    new_role = request.form.get('role')
+    if new_role not in ('teacher', 'student', 'admin'):
+        flash('Invalid role.', 'danger')
+        return redirect(url_for('admin_portal'))
+
+    try:
+        supabase.table('profiles').update({'role': new_role}).eq('id', user_id).execute()
+        flash(f'Role updated to {new_role}.', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+    return redirect(url_for('admin_portal'))
 
 
 # ============================================================

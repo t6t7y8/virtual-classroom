@@ -1,0 +1,142 @@
+{% extends "base.html" %}
+{% block content %}
+
+<!-- Header -->
+<div class="mb-8">
+    <h1 class="text-4xl font-bold flex items-center">
+        <i class="fas fa-shield-halved text-red-400 mr-3"></i>
+        Super Admin Portal
+    </h1>
+    <p class="text-gray-400 mt-1">System-wide overview and management</p>
+</div>
+
+<!-- Stats Cards -->
+<div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+    <div class="glass p-5 rounded-2xl border-l-4 border-primary">
+        <p class="text-gray-400 text-xs uppercase tracking-wide">Total Users</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.total_users }}</p>
+        <p class="text-xs text-gray-500 mt-2">
+            {{ stats.teachers }} teachers · {{ stats.students }} students
+        </p>
+    </div>
+    <div class="glass p-5 rounded-2xl border-l-4 border-secondary">
+        <p class="text-gray-400 text-xs uppercase tracking-wide">Classrooms</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.total_classrooms }}</p>
+        <p class="text-xs text-gray-500 mt-2">across the platform</p>
+    </div>
+    <div class="glass p-5 rounded-2xl border-l-4 border-pink-500">
+        <p class="text-gray-400 text-xs uppercase tracking-wide">Messages</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.total_messages }}</p>
+        <p class="text-xs text-gray-500 mt-2">sent in real-time</p>
+    </div>
+    <div class="glass p-5 rounded-2xl border-l-4 border-green-500">
+        <p class="text-gray-400 text-xs uppercase tracking-wide">Enrollments</p>
+        <p class="text-3xl font-bold mt-1">{{ stats.total_enrollments }}</p>
+        <p class="text-xs text-gray-500 mt-2">student-class connections</p>
+    </div>
+</div>
+
+<!-- Users Table -->
+<div class="glass rounded-2xl p-6 mb-8">
+    <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <i class="fas fa-users text-primary mr-2"></i>
+        All Users
+    </h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-gray-400 text-xs uppercase">
+                    <th class="py-3">Name</th>
+                    <th class="py-3">Role</th>
+                    <th class="py-3">User ID</th>
+                    <th class="py-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for user in users %}
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="py-3 font-medium">{{ user.full_name or 'Unnamed' }}</td>
+                    <td class="py-3">
+                        <span class="px-2 py-1 rounded text-xs font-medium
+                            {% if user.role == 'admin' %}bg-red-500/20 text-red-300
+                            {% elif user.role == 'teacher' %}bg-blue-500/20 text-blue-300
+                            {% else %}bg-green-500/20 text-green-300{% endif %}">
+                            {{ user.role or 'unknown' }}
+                        </span>
+                    </td>
+                    <td class="py-3 text-gray-500 font-mono text-xs">{{ user.id[:12] }}...</td>
+                    <td class="py-3 text-right space-x-2">
+                        <form method="POST" action="{{ url_for('admin_change_role', user_id=user.id) }}" 
+                              class="inline-block">
+                            <select name="role" onchange="this.form.submit()" 
+                                    class="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs cursor-pointer">
+                                <option value="student" {% if user.role == 'student' %}selected{% endif %}>Student</option>
+                                <option value="teacher" {% if user.role == 'teacher' %}selected{% endif %}>Teacher</option>
+                                <option value="admin" {% if user.role == 'admin' %}selected{% endif %}>Admin</option>
+                            </select>
+                        </form>
+                        {% if user.id != session.user.id %}
+                        <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" 
+                              class="inline-block"
+                              onsubmit="return confirm('Delete this user? This cannot be undone.')">
+                            <button type="submit" 
+                                    class="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<!-- Classrooms Table -->
+<div class="glass rounded-2xl p-6">
+    <h2 class="text-2xl font-bold mb-4 flex items-center">
+        <i class="fas fa-chalkboard text-secondary mr-2"></i>
+        All Classrooms
+    </h2>
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-gray-400 text-xs uppercase">
+                    <th class="py-3">Name</th>
+                    <th class="py-3">Teacher</th>
+                    <th class="py-3">Created</th>
+                    <th class="py-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for room in classrooms %}
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="py-3 font-medium">{{ room.name }}</td>
+                    <td class="py-3 text-gray-300">
+                        {{ room.profiles.full_name if room.profiles else 'Unknown' }}
+                    </td>
+                    <td class="py-3 text-gray-500 text-xs">
+                        {{ room.created_at[:10] if room.created_at else '—' }}
+                    </td>
+                    <td class="py-3 text-right">
+                        <form method="POST" 
+                              action="{{ url_for('admin_delete_classroom', classroom_id=room.id) }}"
+                              onsubmit="return confirm('Delete this classroom and all its content?')">
+                            <button type="submit" 
+                                    class="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not classrooms %}
+            <p class="text-gray-500 text-center py-8">No classrooms yet.</p>
+        {% endif %}
+    </div>
+</div>
+
+{% endblock %}
