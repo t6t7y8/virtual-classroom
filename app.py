@@ -16,6 +16,7 @@ socket.getaddrinfo = _ipv4_only_getaddrinfo
 
 import os
 import secrets
+from urllib.parse import urlparse
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -202,6 +203,78 @@ def logout():
     session.clear()
     flash('You have been logged out.', 'info')
     return redirect(url_for('index'))
+
+
+# ============================================================
+# 🔵 GOOGLE OAUTH SIGN-IN
+# ============================================================
+@app.route('/auth/google')
+def auth_google():
+    """Start the Google OAuth flow via Supabase."""
+    try:
+        # Build the callback URL dynamically (works on localhost + Render)
+        redirect_to = url_for('auth_callback', _external=True)
+        res = supabase.auth.sign_in_with_oauth({
+            "provider": "google",
+            "options": {"redirect_to": redirect_to}
+        })
+        return redirect(res.url)
+    except Exception as e:
+        flash(f'Google sign-in error: {str(e)}', 'danger')
+        return redirect(url_for('login'))
+
+
+@app.route('/auth/callback')
+def auth_callback():
+    """Landing page that extracts tokens from the URL fragment and
+    POSTs them to /auth/session. The fragment (#...) is never sent to
+    the server, so it must be handled in JavaScript."""
+    return render_template('auth_callback.html')
+
+
+@app.route('/auth/session', methods=['POST'])
+def auth_session():
+    """Receive tokens from the callback page, verify the user with Supabase,
+    create a profile if missing, and start the Flask session."""
+    data = request.get_json(silent=True) or {}
+    access_token = data.get('access_token')
+    refresh_token = data.get('refresh_token')
+
+    if not access_token:
+        return jsonify({'error': 'No access token provided'}), 400
+
+    try:
+        # Verify the token with Supabase and fetch the user
+        user_response = supabase.auth.get_user(access_token)
+        user = user_response.user
+
+        if not user:
+            return jsonify({'error': 'Could not fetch user'}), 400
+
+        # Check if profile exists; create it if not
+        try:
+            profile = supabase.table('profiles').select('*').eq('id', user.id).single().execute()
+            profile_data = profile.data
+        except Exception:
+            meta = user.user_metadata or {}
+            profile_data = {
+                "id": user.id,
+                "full_name": meta.get('full_name') or meta.get('name') or 'Google User',
+                "role": 'student'  # Default role for Google sign-ups
+            }
+            supabase.table('profiles').insert(profile_data).execute()
+
+        # Store in Flask session
+        session['user'] = {
+            'id': user.id,
+            'email': user.email,
+            'access_token': access_token
+        }
+        session['profile'] = profile_data
+
+        return jsonify({'success': True, 'redirect': url_for('dashboard')})
+    except Exception as e:
+        return jsonify({'error': str(e)}), 500
 
 
 # ============================================================

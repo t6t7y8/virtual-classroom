@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>TyeSpace</title>
+    <title>TyeSpace — Virtual Classroom</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
@@ -11,48 +11,131 @@
             theme: {
                 extend: {
                     colors: {
-                        primary: '#6366f1',
-                        secondary: '#8b5cf6',
+                        primary: '#22d3ee',      /* cyan */
+                        secondary: '#818cf8',     /* soft indigo */
+                        accent: '#a78bfa',        /* very subtle violet */
+                        ink: '#020617',
                     },
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
+                    fontFamily: { sans: ['Inter', 'system-ui', 'sans-serif'] },
                 }
             }
         }
     </script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        body { font-family: 'Inter', sans-serif; }
-        .glass { background: rgba(255, 255, 255, 0.05); backdrop-filter: blur(10px); border: 1px solid rgba(255, 255, 255, 0.1); }
-        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
-        .animate-fade-in { animation: fadeIn 0.5s ease-in; }
-        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        * { -webkit-font-smoothing: antialiased; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #020617;
+            background-image:
+                radial-gradient(ellipse 60% 40% at 15% 0%, rgba(34,211,238,0.08), transparent),
+                radial-gradient(ellipse 50% 40% at 90% 10%, rgba(129,140,248,0.08), transparent),
+                radial-gradient(ellipse 60% 50% at 50% 100%, rgba(167,139,250,0.06), transparent);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Subtle tech grid overlay */
+        .tech-grid {
+            position: fixed;
+            inset: 0;
+            background-image:
+                linear-gradient(rgba(34,211,238,0.045) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(34,211,238,0.045) 1px, transparent 1px);
+            background-size: 48px 48px;
+            mask-image: radial-gradient(ellipse 80% 60% at 50% 40%, #000 40%, transparent 100%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* Floating tech icons in the background */
+        .float-icon {
+            position: fixed;
+            color: #22d3ee;
+            opacity: 0.05;
+            pointer-events: none;
+            z-index: 0;
+            animation: floaty 14s ease-in-out infinite;
+        }
+        @keyframes floaty {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            50%      { transform: translateY(-24px) rotate(4deg); }
+        }
+        .float-icon:nth-child(2) { animation-delay: -2s; color: #818cf8; }
+        .float-icon:nth-child(3) { animation-delay: -4s; color: #a78bfa; }
+        .float-icon:nth-child(4) { animation-delay: -6s; }
+        .float-icon:nth-child(5) { animation-delay: -8s; color: #818cf8; }
+        .float-icon:nth-child(6) { animation-delay: -10s; }
+        .float-icon:nth-child(7) { animation-delay: -3s; color: #a78bfa; }
+        .float-icon:nth-child(8) { animation-delay: -7s; }
+
+        .glass {
+            background: rgba(15, 23, 42, 0.55);
+            backdrop-filter: blur(14px);
+            -webkit-backdrop-filter: blur(14px);
+            border: 1px solid rgba(34, 211, 238, 0.08);
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, #22d3ee 0%, #818cf8 100%);
+        }
+        .gradient-bg:hover { background: linear-gradient(135deg, #06b6d4 0%, #6366f1 100%); }
+
+        .text-gradient {
+            background: linear-gradient(135deg, #22d3ee, #818cf8);
+            -webkit-background-clip: text;
+            background-clip: text;
+            color: transparent;
+        }
+
+        .animate-fade-in { animation: fadeIn 0.5s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(8px);} to {opacity:1; transform:none;} }
+
+        /* Primary button glow */
+        .glow-cyan { box-shadow: 0 8px 30px -8px rgba(34,211,238,0.5); }
     </style>
 </head>
-<body class="bg-gray-900 text-gray-100 min-h-screen">
+<body class="text-slate-100 min-h-screen relative overflow-x-hidden">
+
+    <!-- Background layers -->
+    <div class="tech-grid"></div>
+    <i class="fas fa-code float-icon text-7xl" style="top:12%; left:6%;"></i>
+    <i class="fas fa-book float-icon text-6xl" style="top:70%; left:8%;"></i>
+    <i class="fas fa-atom float-icon text-7xl" style="top:20%; right:8%;"></i>
+    <i class="fas fa-laptop-code float-icon text-6xl" style="bottom:12%; right:10%;"></i>
+    <i class="fas fa-graduation-cap float-icon text-6xl" style="top:45%; left:3%;"></i>
+    <i class="fas fa-brain float-icon text-6xl" style="top:55%; right:4%;"></i>
+    <i class="fas fa-flask float-icon text-5xl" style="top:82%; left:45%;"></i>
+    <i class="fas fa-chart-line float-icon text-5xl" style="top:8%; left:48%;"></i>
+
     <!-- Navigation -->
-    <nav class="glass sticky top-0 z-50 px-6 py-4">
+    <nav class="relative z-20 glass sticky top-0 px-6 py-3">
         <div class="container mx-auto flex justify-between items-center">
-            <a href="{{ url_for('index') }}" class="text-2xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent">
-                <i class="fas fa-graduation-cap mr-2"></i>TyeSpace
+            <a href="{{ url_for('index') }}" class="text-2xl font-bold flex items-center">
+                <span class="w-9 h-9 rounded-lg gradient-bg flex items-center justify-center mr-3">
+                    <i class="fas fa-graduation-cap text-white text-sm"></i>
+                </span>
+                <span class="text-gradient font-extrabold tracking-tight">TyeSpace</span>
             </a>
-            <div class="flex items-center space-x-4">
+            <div class="flex items-center space-x-3">
                 {% if session.user %}
-                    <span class="text-gray-300">{{ session.profile.full_name }}</span>
+                    <span class="text-slate-300 text-sm hidden md:inline">{{ session.profile.full_name }}</span>
 
                     {% if session.profile and session.profile.role == 'admin' %}
                     <a href="{{ url_for('admin_portal') }}"
-                       class="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition text-sm">
+                       class="px-3 py-1.5 rounded-lg bg-rose-500/15 text-rose-300 hover:bg-rose-500/25 border border-rose-500/20 transition text-sm">
                         <i class="fas fa-shield-halved mr-1"></i>Admin
                     </a>
                     {% endif %}
 
-                    <a href="{{ url_for('logout') }}" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">Logout</a>
+                    <a href="{{ url_for('logout') }}"
+                       class="px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 border border-white/10 transition text-sm">
+                        <i class="fas fa-right-from-bracket mr-1"></i>Logout
+                    </a>
                 {% else %}
-                    <a href="{{ url_for('login') }}" class="px-4 py-2 rounded-lg hover:bg-white/10 transition">Login</a>
-                    <a href="{{ url_for('register') }}" class="px-4 py-2 rounded-lg gradient-bg text-white hover:opacity-90 transition">Sign Up</a>
+                    <a href="{{ url_for('login') }}" class="px-4 py-1.5 rounded-lg hover:bg-white/5 transition text-sm">Login</a>
+                    <a href="{{ url_for('register') }}" class="px-4 py-1.5 rounded-lg gradient-bg text-white hover:opacity-95 transition text-sm font-medium glow-cyan">Sign Up</a>
                 {% endif %}
             </div>
         </div>
@@ -61,13 +144,13 @@
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="container mx-auto px-4 mt-4">
+            <div class="relative z-20 container mx-auto px-4 mt-4">
                 {% for category, message in messages %}
                     <div class="glass rounded-lg p-4 mb-2 animate-fade-in
-                        {% if category == 'success' %}border-l-4 border-green-500 text-green-300
-                        {% elif category == 'danger' %}border-l-4 border-red-500 text-red-300
-                        {% elif category == 'warning' %}border-l-4 border-yellow-500 text-yellow-300
-                        {% else %}border-l-4 border-blue-500 text-blue-300{% endif %}">
+                        {% if category == 'success' %}border-l-4 !border-l-emerald-400 text-emerald-200
+                        {% elif category == 'danger' %}border-l-4 !border-l-rose-400 text-rose-200
+                        {% elif category == 'warning' %}border-l-4 !border-l-amber-400 text-amber-200
+                        {% else %}border-l-4 !border-l-cyan-400 text-cyan-200{% endif %}">
                         {{ message }}
                     </div>
                 {% endfor %}
@@ -76,7 +159,7 @@
     {% endwith %}
 
     <!-- Main Content -->
-    <main class="container mx-auto px-4 py-8">
+    <main class="relative z-10 container mx-auto px-4 py-8">
         {% block content %}{% endblock %}
     </main>
 
