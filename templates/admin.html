@@ -36,6 +36,81 @@
     </div>
 </div>
 
+<!-- Teacher Access Codes Section -->
+<div class="glass rounded-2xl p-6 mb-8">
+    <div class="flex justify-between items-center mb-4 flex-wrap gap-4">
+        <h2 class="text-2xl font-bold flex items-center">
+            <i class="fas fa-key text-yellow-400 mr-2"></i>
+            Teacher Access Codes
+        </h2>
+
+        <form method="POST" action="{{ url_for('admin_generate_codes') }}"
+              class="flex items-center gap-2">
+            <input type="number" name="count" value="1" min="1" max="50"
+                   class="w-20 p-2 rounded-lg bg-white/5 border border-white/10 text-white text-sm focus:outline-none focus:border-yellow-400">
+            <button type="submit"
+                    class="px-4 py-2 rounded-lg bg-yellow-500/20 text-yellow-300 hover:bg-yellow-500/30 transition text-sm font-semibold">
+                <i class="fas fa-plus mr-1"></i>Generate Codes
+            </button>
+        </form>
+    </div>
+
+    <p class="text-sm text-gray-400 mb-4">
+        Give these codes to trusted users. They must enter a code to register as a teacher.
+        Each code works <strong class="text-yellow-300">once</strong>.
+    </p>
+
+    <div class="overflow-x-auto">
+        <table class="w-full text-left text-sm">
+            <thead>
+                <tr class="border-b border-white/10 text-gray-400 text-xs uppercase">
+                    <th class="py-3">Code</th>
+                    <th class="py-3">Status</th>
+                    <th class="py-3">Created</th>
+                    <th class="py-3 text-right">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for code in codes %}
+                <tr class="border-b border-white/5 hover:bg-white/5 transition">
+                    <td class="py-3 font-mono font-semibold tracking-wider text-yellow-300">
+                        {{ code.code }}
+                    </td>
+                    <td class="py-3">
+                        {% if code.is_used %}
+                            <span class="px-2 py-1 rounded text-xs bg-gray-500/20 text-gray-400">
+                                <i class="fas fa-check mr-1"></i>Used
+                            </span>
+                        {% else %}
+                            <span class="px-2 py-1 rounded text-xs bg-green-500/20 text-green-300">
+                                <i class="fas fa-circle mr-1" style="font-size: 6px;"></i>Available
+                            </span>
+                        {% endif %}
+                    </td>
+                    <td class="py-3 text-gray-500 text-xs">
+                        {{ code.created_at[:10] if code.created_at else '—' }}
+                    </td>
+                    <td class="py-3 text-right">
+                        <form method="POST"
+                              action="{{ url_for('admin_delete_code', code_id=code.id) }}"
+                              class="inline-block"
+                              onsubmit="return confirm('Delete this code?')">
+                            <button type="submit"
+                                    class="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% if not codes %}
+            <p class="text-gray-500 text-center py-8">No codes generated yet. Click "Generate Codes" above.</p>
+        {% endif %}
+    </div>
+</div>
+
 <!-- Users Table -->
 <div class="glass rounded-2xl p-6 mb-8">
     <h2 class="text-2xl font-bold mb-4 flex items-center">
@@ -66,9 +141,9 @@
                     </td>
                     <td class="py-3 text-gray-500 font-mono text-xs">{{ user.id[:12] }}...</td>
                     <td class="py-3 text-right space-x-2">
-                        <form method="POST" action="{{ url_for('admin_change_role', user_id=user.id) }}" 
+                        <form method="POST" action="{{ url_for('admin_change_role', user_id=user.id) }}"
                               class="inline-block">
-                            <select name="role" onchange="this.form.submit()" 
+                            <select name="role" onchange="this.form.submit()"
                                     class="bg-white/5 border border-white/10 rounded px-2 py-1 text-xs cursor-pointer">
                                 <option value="student" {% if user.role == 'student' %}selected{% endif %}>Student</option>
                                 <option value="teacher" {% if user.role == 'teacher' %}selected{% endif %}>Teacher</option>
@@ -76,10 +151,10 @@
                             </select>
                         </form>
                         {% if user.id != session.user.id %}
-                        <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}" 
+                        <form method="POST" action="{{ url_for('admin_delete_user', user_id=user.id) }}"
                               class="inline-block"
                               onsubmit="return confirm('Delete this user? This cannot be undone.')">
-                            <button type="submit" 
+                            <button type="submit"
                                     class="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">
                                 <i class="fas fa-trash"></i>
                             </button>
@@ -120,10 +195,10 @@
                         {{ room.created_at[:10] if room.created_at else '—' }}
                     </td>
                     <td class="py-3 text-right">
-                        <form method="POST" 
+                        <form method="POST"
                               action="{{ url_for('admin_delete_classroom', classroom_id=room.id) }}"
                               onsubmit="return confirm('Delete this classroom and all its content?')">
-                            <button type="submit" 
+                            <button type="submit"
                                     class="px-2 py-1 rounded text-xs bg-red-500/20 text-red-300 hover:bg-red-500/30 transition">
                                 <i class="fas fa-trash"></i>
                             </button>

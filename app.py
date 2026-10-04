@@ -15,6 +15,7 @@ socket.getaddrinfo = _ipv4_only_getaddrinfo
 # ============================================================
 
 import os
+import secrets
 from flask import Flask, render_template, request, redirect, url_for, session, flash, jsonify
 from supabase import create_client, Client
 from dotenv import load_dotenv
@@ -92,7 +93,7 @@ def index():
 
 
 # ============================================================
-# 📝 REGISTER
+# 📝 REGISTER (with teacher access code validation)
 # ============================================================
 @app.route('/register', methods=['GET', 'POST'])
 def register():
@@ -101,11 +102,32 @@ def register():
         password = request.form.get('password')
         full_name = request.form.get('full_name')
         role = request.form.get('role', 'student')
+        teacher_code = request.form.get('teacher_code', '').strip().upper()
 
+        # 🛡️ VALIDATE TEACHER CODE (only for teacher registrations)
+        code_row = None
+        if role == 'teacher':
+            if not teacher_code:
+                flash('A teacher access code is required to register as a teacher.', 'danger')
+                return render_template('register.html')
+
+            try:
+                result = supabase.table('teacher_codes').select('*').eq('code', teacher_code).execute()
+                if not result.data:
+                    flash('Invalid teacher access code. Please contact the administrator.', 'danger')
+                    return render_template('register.html')
+
+                code_row = result.data[0]
+
+                if code_row.get('is_used'):
+                    flash('This teacher access code has already been used.', 'danger')
+                    return render_template('register.html')
+            except Exception as e:
+                flash(f'Error validating code: {str(e)}', 'danger')
+                return render_template('register.html')
+
+        # ✅ CREATE THE USER
         try:
-            # Create user in Supabase Auth
-            # Metadata (full_name, role) is picked up by the Postgres
-            # trigger 'handle_new_user' which auto-creates the profile row.
             user = supabase.auth.sign_up({
                 "email": email,
                 "password": password,
@@ -116,6 +138,13 @@ def register():
                     }
                 }
             })
+
+            # 🔒 Mark the teacher code as used
+            if role == 'teacher' and code_row:
+                supabase.table('teacher_codes').update({
+                    "is_used": True,
+                    "used_by": user.user.id
+                }).eq('id', code_row['id']).execute()
 
             flash('Registration successful! Please log in.', 'success')
             return redirect(url_for('login'))
@@ -353,6 +382,9 @@ def admin_portal():
     # Fetch all classrooms with teacher info
     classrooms = supabase.table('classrooms').select('*, profiles(full_name)').order('created_at', desc=True).execute()
 
+    # Fetch teacher codes
+    codes = supabase.table('teacher_codes').select('*').order('created_at', desc=True).execute()
+
     # Fetch stats
     messages_count = supabase.table('messages').select('id', count='exact').execute()
     enrollments_count = supabase.table('enrollments').select('id', count='exact').execute()
@@ -376,6 +408,7 @@ def admin_portal():
     return render_template('admin.html',
                          users=users.data,
                          classrooms=classrooms.data,
+                         codes=codes.data,
                          stats=stats)
 
 
@@ -412,6 +445,51 @@ def admin_change_role(user_id):
     try:
         supabase.table('profiles').update({'role': new_role}).eq('id', user_id).execute()
         flash(f'Role updated to {new_role}.', 'success')
+    except Exception as e:
+        flash(f'Error: {str(e)}', 'danger')
+    return redirect(url_for('admin_portal'))
+
+
+# ============================================================
+# 🔑 ADMIN: TEACHER ACCESS CODES
+# ============================================================
+@app.route('/admin/generate_codes', methods=['POST'])
+@admin_required
+def admin_generate_codes():
+    try:
+        count = int(request.form.get('count', 1))
+    except ValueError:
+        count = 1
+    count = min(max(count, 1), 50)  # clamp between 1 and 50
+
+    generated = []
+
+    try:
+        for _ in range(count):
+            # Generate a code like "TCH-AB12-CD34"
+            part1 = secrets.token_hex(2).upper()
+            part2 = secrets.token_hex(2).upper()
+            code = f"TCH-{part1}-{part2}"
+
+            supabase.table('teacher_codes').insert({
+                "code": code,
+                "created_by": session['user']['id']
+            }).execute()
+            generated.append(code)
+
+        flash(f'{len(generated)} teacher code(s) generated successfully.', 'success')
+    except Exception as e:
+        flash(f'Error generating codes: {str(e)}', 'danger')
+
+    return redirect(url_for('admin_portal'))
+
+
+@app.route('/admin/delete_code/<int:code_id>', methods=['POST'])
+@admin_required
+def admin_delete_code(code_id):
+    try:
+        supabase.table('teacher_codes').delete().eq('id', code_id).execute()
+        flash('Code deleted.', 'success')
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
     return redirect(url_for('admin_portal'))

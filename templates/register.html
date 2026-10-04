@@ -2,7 +2,7 @@
 {% block content %}
 
 <div class="glass max-w-5xl w-full rounded-3xl overflow-hidden flex flex-col md:flex-row shadow-2xl animate-fade-in border border-white/10">
-    
+
     <!-- Left Side: Register Form -->
     <div class="md:w-1/2 p-10 md:p-14 flex flex-col justify-center bg-gray-900/50">
         <h2 class="text-3xl font-bold mb-2 text-white">Create Account</h2>
@@ -52,9 +52,10 @@
                     <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
                         <i class="fas fa-user-tag text-gray-500"></i>
                     </div>
-                    <select name="role" class="input-field pl-12 appearance-none bg-gray-900/50 cursor-pointer">
+                    <select name="role" id="role-select" onchange="toggleTeacherCode()"
+                            class="input-field pl-12 appearance-none bg-gray-900/50 cursor-pointer">
                         <option value="student" class="bg-gray-900">Student</option>
-                        <option value="teacher" class="bg-gray-900">Teacher</option>
+                        <option value="teacher" class="bg-gray-900">Teacher (requires access code)</option>
                     </select>
                     <div class="absolute inset-y-0 right-0 pr-4 flex items-center pointer-events-none">
                         <i class="fas fa-chevron-down text-gray-500"></i>
@@ -62,33 +63,72 @@
                 </div>
             </div>
 
+            <!-- Teacher Access Code (hidden by default) -->
+            <div id="teacher-code-field" class="hidden">
+                <label class="block text-sm font-medium text-yellow-300 mb-2">
+                    <i class="fas fa-key mr-1"></i>Teacher Access Code
+                </label>
+                <div class="relative">
+                    <div class="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
+                        <i class="fas fa-shield-halved text-yellow-400"></i>
+                    </div>
+                    <input type="text" name="teacher_code" id="teacher_code"
+                           placeholder="TCH-XXXX-XXXX"
+                           class="input-field pl-12 font-mono uppercase tracking-widest border-yellow-500/30">
+                </div>
+                <p class="text-xs text-yellow-300/70 mt-2">
+                    <i class="fas fa-info-circle mr-1"></i>
+                    Contact the administrator to get a valid teacher access code.
+                </p>
+            </div>
+
             <!-- Submit Button -->
-            <button type="submit" 
+            <button type="submit"
                     class="w-full py-4 rounded-xl gradient-bg text-white font-semibold text-lg hover:opacity-90 hover:scale-[1.02] transition transform duration-300 shadow-lg shadow-primary/30 mt-4">
                 <i class="fas fa-rocket mr-2"></i>Create Account
             </button>
         </form>
 
         <p class="text-center text-gray-400 mt-6">
-            Already have an account? 
+            Already have an account?
             <a href="{{ url_for('login') }}" class="text-primary hover:text-secondary font-semibold transition">Log in here</a>
         </p>
     </div>
 
-    <!-- Right Side: Branding & Visuals -->
+    <!-- Right Side: Branding -->
     <div class="md:w-1/2 gradient-bg p-12 flex flex-col justify-center items-center text-center relative overflow-hidden order-first md:order-last">
-        <!-- Decorative circles -->
         <div class="absolute -top-24 -right-24 w-64 h-64 bg-white/10 rounded-full blur-2xl"></div>
         <div class="absolute -bottom-24 -left-24 w-64 h-64 bg-black/20 rounded-full blur-2xl"></div>
-        
+
         <div class="relative z-10">
             <div class="w-20 h-20 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-6 backdrop-blur-sm">
                 <i class="fas fa-users text-4xl text-white"></i>
             </div>
-            <h1 class="text-4xl font-bold text-white mb-4">Join EduSpace</h1>
+            <h1 class="text-4xl font-bold text-white mb-4">Join TyeSpace</h1>
             <p class="text-white/80 text-lg">Connect, collaborate, and learn in a beautiful real-time environment.</p>
         </div>
     </div>
 
 </div>
+
+<script>
+    function toggleTeacherCode() {
+        const role = document.getElementById('role-select').value;
+        const field = document.getElementById('teacher-code-field');
+        const input = document.getElementById('teacher_code');
+
+        if (role === 'teacher') {
+            field.classList.remove('hidden');
+            input.required = true;
+        } else {
+            field.classList.add('hidden');
+            input.required = false;
+            input.value = '';
+        }
+    }
+
+    // Run on page load in case browser restored form values
+    document.addEventListener('DOMContentLoaded', toggleTeacherCode);
+</script>
+
 {% endblock %}
