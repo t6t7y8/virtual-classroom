@@ -24,6 +24,13 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
         * { -webkit-font-smoothing: antialiased; }
+
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+        }
+
         body {
             font-family: 'Inter', sans-serif;
             background-color: #020617;
@@ -31,7 +38,9 @@
                 radial-gradient(ellipse 55% 40% at 15% 0%, rgba(34,211,238,0.09), transparent),
                 radial-gradient(ellipse 55% 40% at 90% 100%, rgba(129,140,248,0.09), transparent);
             background-attachment: fixed;
-            min-height: 100vh;
+            color: #e2e8f0;
+            /* ✅ Allow natural scrolling — no overflow-hidden */
+            overflow-x: hidden;
         }
 
         .tech-grid {
@@ -41,6 +50,7 @@
                 linear-gradient(rgba(34,211,238,0.05) 1px, transparent 1px),
                 linear-gradient(90deg, rgba(34,211,238,0.05) 1px, transparent 1px);
             background-size: 44px 44px;
+            -webkit-mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, #000 40%, transparent 100%);
             mask-image: radial-gradient(ellipse 90% 70% at 50% 50%, #000 40%, transparent 100%);
             pointer-events: none;
             z-index: 0;
@@ -65,6 +75,11 @@
         .float-icon:nth-of-type(6) { animation-delay: -10s; }
         .float-icon:nth-of-type(7) { animation-delay: -3s; }
         .float-icon:nth-of-type(8) { animation-delay: -7s; color:#a78bfa; }
+
+        /* Hide floating icons on small screens (keeps mobile clean + fast) */
+        @media (max-width: 640px) {
+            .float-icon { display: none; }
+        }
 
         .glass {
             background: rgba(15, 23, 42, 0.6);
@@ -93,6 +108,7 @@
             border: 1px solid rgba(255, 255, 255, 0.08);
             color: #fff;
             transition: all 0.25s;
+            font-size: 16px; /* Prevents iOS auto-zoom */
         }
         .input-field::placeholder { color: #64748b; }
         .input-field:focus {
@@ -135,7 +151,7 @@
         }
     </style>
 </head>
-<body class="text-slate-100 min-h-screen flex items-center justify-center p-4 relative overflow-hidden">
+<body class="relative">
 
     <!-- Background layers -->
     <div class="tech-grid"></div>
@@ -151,7 +167,7 @@
     <!-- Flash Messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
-            <div class="fixed top-6 right-6 z-50 space-y-2 max-w-md">
+            <div class="fixed top-4 right-4 left-4 sm:left-auto z-50 space-y-2 sm:max-w-md">
                 {% for category, message in messages %}
                     <div class="glass rounded-xl px-5 py-3 animate-fade-in shadow-2xl
                         {% if category == 'success' %}border-l-4 !border-l-emerald-400 text-emerald-200
@@ -165,7 +181,10 @@
         {% endif %}
     {% endwith %}
 
-    {% block content %}{% endblock %}
+    <!-- ✅ Content wrapper that scrolls naturally on every screen size -->
+    <div class="relative z-10 min-h-screen flex items-start sm:items-center justify-center py-6 sm:py-10 px-4">
+        {% block content %}{% endblock %}
+    </div>
 
 </body>
 </html>

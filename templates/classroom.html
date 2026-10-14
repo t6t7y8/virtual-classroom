@@ -1,131 +1,233 @@
 {% extends "base.html" %}
 {% block content %}
-<div class="mb-8">
-    <h1 class="text-4xl font-bold mb-2">{{ classroom.name }}</h1>
-    <p class="text-gray-400">{{ classroom.description }}</p>
+
+<!-- Header -->
+<div class="mb-6">
+    <h1 class="text-3xl sm:text-4xl font-bold mb-2">{{ classroom.name }}</h1>
+    <p class="text-slate-400 text-sm sm:text-base">{{ classroom.description }}</p>
 </div>
 
 <!-- Tabs -->
-<div class="flex space-x-4 mb-6 border-b border-white/10 pb-2">
-    <button onclick="showTab('chat')" class="tab-btn px-6 py-2 rounded-t-lg font-semibold text-primary border-b-2 border-primary">Chat</button>
-    <button onclick="showTab('announcements')" class="tab-btn px-6 py-2 rounded-t-lg font-semibold text-gray-400 hover:text-white">Announcements</button>
-    <button onclick="showTab('assignments')" class="tab-btn px-6 py-2 rounded-t-lg font-semibold text-gray-400 hover:text-white">Assignments</button>
+<div class="flex overflow-x-auto gap-2 mb-6 border-b border-white/10 pb-2 -mx-4 px-4 sm:mx-0 sm:px-0">
+    <button onclick="showTab('chat', this)" class="tab-btn whitespace-nowrap px-4 sm:px-6 py-2 rounded-t-lg font-semibold text-cyan-400 border-b-2 border-cyan-400">
+        <i class="fas fa-comments mr-1"></i>Chat
+    </button>
+    <button onclick="showTab('announcements', this)" class="tab-btn whitespace-nowrap px-4 sm:px-6 py-2 rounded-t-lg font-semibold text-slate-400 hover:text-white">
+        <i class="fas fa-bullhorn mr-1"></i>Announcements
+    </button>
+    <button onclick="showTab('assignments', this)" class="tab-btn whitespace-nowrap px-4 sm:px-6 py-2 rounded-t-lg font-semibold text-slate-400 hover:text-white">
+        <i class="fas fa-tasks mr-1"></i>Assignments
+    </button>
+    <button onclick="showTab('call', this)" class="tab-btn whitespace-nowrap px-4 sm:px-6 py-2 rounded-t-lg font-semibold text-slate-400 hover:text-white relative">
+        <i class="fas fa-video mr-1"></i>Call
+        <span id="call-live-badge" class="hidden absolute -top-1 -right-1 w-2.5 h-2.5 bg-red-500 rounded-full animate-pulse"></span>
+    </button>
 </div>
 
-<!-- Chat Tab -->
+<!-- ============================== -->
+<!-- Chat Tab                       -->
+<!-- ============================== -->
 <div id="chat-tab" class="tab-content">
-    <div class="glass rounded-2xl p-6 h-[60vh] flex flex-col">
-        <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 space-y-3">
+    <div class="glass rounded-2xl p-4 sm:p-6 h-[60vh] flex flex-col">
+        <div id="chat-messages" class="flex-1 overflow-y-auto mb-4 space-y-3 pr-2">
             {% for msg in messages %}
             <div class="flex items-start space-x-3 animate-fade-in">
-                <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-xs font-bold">
+                <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-xs font-bold shrink-0">
                     {{ msg.profiles.full_name[0] }}
                 </div>
-                <div>
+                <div class="min-w-0">
                     <div class="flex items-center space-x-2">
                         <span class="font-semibold text-sm">{{ msg.profiles.full_name }}</span>
-                        <span class="text-xs text-gray-500">{{ msg.created_at[11:16] }}</span>
+                        <span class="text-xs text-slate-500">{{ msg.created_at[11:16] }}</span>
                     </div>
-                    <p class="text-gray-300">{{ msg.content }}</p>
+                    <p class="text-slate-300 break-words">{{ msg.content }}</p>
                 </div>
             </div>
             {% endfor %}
         </div>
-        <div class="flex space-x-3">
-            <input type="text" id="message-input" placeholder="Type a message..." class="flex-1 p-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-primary text-white">
-            <button onclick="sendMessage()" class="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">
+        <div class="flex space-x-2 sm:space-x-3">
+            <input type="text" id="message-input" placeholder="Type a message..."
+                   class="flex-1 p-3 rounded-xl bg-white/5 border border-white/10 focus:outline-none focus:border-cyan-400 text-white text-sm">
+            <button onclick="sendMessage()"
+                    class="px-4 sm:px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">
                 <i class="fas fa-paper-plane"></i>
             </button>
         </div>
     </div>
 </div>
 
-<!-- Announcements Tab -->
+<!-- ============================== -->
+<!-- Announcements Tab              -->
+<!-- ============================== -->
 <div id="announcements-tab" class="tab-content hidden">
     {% if session.profile.role == 'teacher' %}
-    <form method="POST" action="{{ url_for('post_announcement', classroom_id=classroom.id) }}" class="glass rounded-2xl p-6 mb-6">
-        <textarea name="content" placeholder="Post an announcement..." required class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white"></textarea>
-        <button type="submit" class="px-6 py-2 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">Post</button>
+    <form method="POST" action="{{ url_for('post_announcement', classroom_id=classroom.id) }}" class="glass rounded-2xl p-4 sm:p-6 mb-6">
+        <textarea name="content" placeholder="Post an announcement..." required
+                  class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-cyan-400 text-white"></textarea>
+        <button type="submit" class="px-6 py-2 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">
+            <i class="fas fa-bullhorn mr-2"></i>Post
+        </button>
     </form>
     {% endif %}
     <div class="space-y-4">
         {% for ann in announcements %}
-        <div class="glass rounded-2xl p-6 animate-fade-in">
+        <div class="glass rounded-2xl p-4 sm:p-6 animate-fade-in">
             <div class="flex justify-between items-start mb-2">
                 <span class="font-semibold">{{ ann.profiles.full_name }}</span>
-                <span class="text-xs text-gray-500">{{ ann.created_at[:10] }}</span>
+                <span class="text-xs text-slate-500">{{ ann.created_at[:10] }}</span>
             </div>
-            <p class="text-gray-300">{{ ann.content }}</p>
+            <p class="text-slate-300">{{ ann.content }}</p>
         </div>
         {% endfor %}
+        {% if not announcements %}
+            <div class="glass rounded-2xl p-8 text-center text-slate-500">No announcements yet.</div>
+        {% endif %}
     </div>
 </div>
 
-<!-- Assignments Tab -->
+<!-- ============================== -->
+<!-- Assignments Tab                -->
+<!-- ============================== -->
 <div id="assignments-tab" class="tab-content hidden">
     {% if session.profile.role == 'teacher' %}
-    <form method="POST" action="{{ url_for('create_assignment', classroom_id=classroom.id) }}" class="glass rounded-2xl p-6 mb-6">
-        <input type="text" name="title" placeholder="Assignment Title" required class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white">
-        <textarea name="description" placeholder="Description" class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white"></textarea>
-        <input type="datetime-local" name="due_date" class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-primary text-white">
-        <button type="submit" class="px-6 py-2 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">Create</button>
+    <form method="POST" action="{{ url_for('create_assignment', classroom_id=classroom.id) }}" class="glass rounded-2xl p-4 sm:p-6 mb-6">
+        <input type="text" name="title" placeholder="Assignment Title" required
+               class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-cyan-400 text-white">
+        <textarea name="description" placeholder="Description"
+                  class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-cyan-400 text-white"></textarea>
+        <input type="datetime-local" name="due_date"
+               class="w-full p-3 rounded-xl bg-white/5 border border-white/10 mb-4 focus:outline-none focus:border-cyan-400 text-white">
+        <button type="submit" class="px-6 py-2 rounded-xl gradient-bg text-white font-semibold hover:opacity-90 transition">
+            <i class="fas fa-plus mr-2"></i>Create
+        </button>
     </form>
     {% endif %}
     <div class="space-y-4">
         {% for assign in assignments %}
-        <div class="glass rounded-2xl p-6 animate-fade-in">
+        <div class="glass rounded-2xl p-4 sm:p-6 animate-fade-in">
             <h3 class="text-xl font-semibold mb-2">{{ assign.title }}</h3>
-            <p class="text-gray-400 text-sm mb-3">{{ assign.description }}</p>
-            <span class="text-xs px-3 py-1 rounded-full bg-secondary/20 text-secondary">
+            <p class="text-slate-400 text-sm mb-3">{{ assign.description }}</p>
+            <span class="text-xs px-3 py-1 rounded-full bg-indigo-500/20 text-indigo-300">
+                <i class="fas fa-calendar mr-1"></i>
                 Due: {{ assign.due_date[:10] if assign.due_date else 'No due date' }}
             </span>
         </div>
         {% endfor %}
+        {% if not assignments %}
+            <div class="glass rounded-2xl p-8 text-center text-slate-500">No assignments yet.</div>
+        {% endif %}
     </div>
 </div>
 
+<!-- ============================== -->
+<!-- Call Tab                       -->
+<!-- ============================== -->
+<div id="call-tab" class="tab-content hidden">
+    <div class="glass rounded-2xl p-4 sm:p-6">
+
+        <!-- Status banner -->
+        <div id="call-status" class="mb-6 p-4 rounded-xl bg-slate-900/50 border border-white/10 text-center">
+            <p id="call-status-text" class="text-slate-300">
+                {% if active_call %}
+                    <i class="fas fa-circle text-emerald-400 text-xs mr-2 animate-pulse"></i>
+                    A class call is currently live.
+                {% else %}
+                    <i class="fas fa-circle text-slate-500 text-xs mr-2"></i>
+                    No active class call.
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Controls -->
+        <div class="flex flex-wrap items-center justify-center gap-3 mb-6">
+
+            {% if session.profile.role == 'teacher' %}
+                <!-- TEACHER CONTROLS -->
+                <button id="start-call-btn"
+                        class="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:scale-105 transition transform glow-cyan {% if active_call %}hidden{% endif %}">
+                    <i class="fas fa-video mr-2"></i>Start Class Call
+                </button>
+                <button id="end-call-btn"
+                        class="px-6 py-3 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold hover:bg-rose-500/30 transition {% if not active_call %}hidden{% endif %}">
+                    <i class="fas fa-phone-slash mr-2"></i>End Call
+                </button>
+            {% else %}
+                <!-- STUDENT CONTROLS -->
+                <button id="join-call-btn"
+                        class="px-6 py-3 rounded-xl gradient-bg text-white font-semibold hover:scale-105 transition transform glow-cyan {% if not active_call %}hidden{% endif %}">
+                    <i class="fas fa-phone mr-2"></i>Join Call
+                </button>
+                <button id="leave-call-btn"
+                        class="px-6 py-3 rounded-xl bg-rose-500/20 text-rose-300 border border-rose-500/30 font-semibold hover:bg-rose-500/30 transition hidden">
+                    <i class="fas fa-phone-slash mr-2"></i>Leave Call
+                </button>
+            {% endif %}
+
+            <!-- Local media controls (only shown when in call) -->
+            <div id="media-controls" class="hidden flex items-center gap-2">
+                <button id="toggle-mic" class="w-11 h-11 rounded-full bg-white/5 border border-white/10 text-cyan-400 hover:bg-white/10 transition">
+                    <i class="fas fa-microphone" id="mic-icon"></i>
+                </button>
+                <button id="toggle-cam" class="w-11 h-11 rounded-full bg-white/5 border border-white/10 text-cyan-400 hover:bg-white/10 transition">
+                    <i class="fas fa-video" id="cam-icon"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Video grid -->
+        <div id="video-grid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4"></div>
+
+        <!-- Empty state -->
+        <div id="call-empty-state" class="text-center py-12 text-slate-500">
+            <i class="fas fa-video-slash text-4xl mb-3 opacity-40"></i>
+            <p>No one is on the call yet.</p>
+        </div>
+
+        <!-- Note about permissions -->
+        <p class="text-xs text-slate-500 text-center mt-6">
+            <i class="fas fa-info-circle mr-1"></i>
+            Your browser will ask for camera and microphone permission when you join.
+            Calls are peer-to-peer and are not recorded.
+        </p>
+    </div>
+</div>
+
+<script src="https://cdn.socket.io/4.5.4/socket.io.min.js"></script>
 <script>
+    // ==========================================================
     // Tab switching
-    function showTab(tab) {
+    // ==========================================================
+    function showTab(tab, btn) {
         document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
         document.querySelectorAll('.tab-btn').forEach(el => {
-            el.classList.remove('text-primary', 'border-primary', 'border-b-2');
-            el.classList.add('text-gray-400');
+            el.classList.remove('text-cyan-400', 'border-b-2', 'border-cyan-400');
+            el.classList.add('text-slate-400');
         });
         document.getElementById(tab + '-tab').classList.remove('hidden');
-        event.target.classList.add('text-primary', 'border-primary', 'border-b-2');
-        event.target.classList.remove('text-gray-400');
+        if (btn) {
+            btn.classList.remove('text-slate-400');
+            btn.classList.add('text-cyan-400', 'border-b-2', 'border-cyan-400');
+        }
     }
 
-    // Socket.IO for real-time chat
+    // ==========================================================
+    // Socket.IO setup
+    // ==========================================================
     const socket = io();
     const room = "{{ classroom.id }}";
     const userName = "{{ session.profile.full_name }}";
+    const userRole = "{{ session.profile.role }}";
+    const classroomId = {{ classroom.id }};
+    const initialCallActive = {{ 'true' if active_call else 'false' }};
 
+    // Enter classroom chat room
     socket.on('connect', () => {
         socket.emit('join', { room: room });
     });
 
-    socket.on('receive_message', (data) => {
-        const chatMessages = document.getElementById('chat-messages');
-        const msgDiv = document.createElement('div');
-        msgDiv.className = 'flex items-start space-x-3 animate-fade-in';
-        msgDiv.innerHTML = `
-            <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-xs font-bold">
-                ${data.user[0]}
-            </div>
-            <div>
-                <div class="flex items-center space-x-2">
-                    <span class="font-semibold text-sm">${data.user}</span>
-                    <span class="text-xs text-gray-500">${data.timestamp}</span>
-                </div>
-                <p class="text-gray-300">${data.message}</p>
-            </div>
-        `;
-        chatMessages.appendChild(msgDiv);
-        chatMessages.scrollTop = chatMessages.scrollHeight;
-    });
-
+    // ==========================================================
+    // Chat handling
+    // ==========================================================
     function sendMessage() {
         const input = document.getElementById('message-input');
         const message = input.value.trim();
@@ -138,5 +240,287 @@
     document.getElementById('message-input').addEventListener('keypress', (e) => {
         if (e.key === 'Enter') sendMessage();
     });
+
+    socket.on('receive_message', (data) => {
+        const chatMessages = document.getElementById('chat-messages');
+        const msgDiv = document.createElement('div');
+        msgDiv.className = 'flex items-start space-x-3 animate-fade-in';
+        msgDiv.innerHTML = `
+            <div class="w-8 h-8 rounded-full gradient-bg flex items-center justify-center text-xs font-bold shrink-0">
+                ${data.user[0]}
+            </div>
+            <div class="min-w-0">
+                <div class="flex items-center space-x-2">
+                    <span class="font-semibold text-sm">${data.user}</span>
+                    <span class="text-xs text-slate-500">${data.timestamp}</span>
+                </div>
+                <p class="text-slate-300 break-words">${data.message}</p>
+            </div>
+        `;
+        chatMessages.appendChild(msgDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    });
+
+    // ==========================================================
+    // WebRTC Call Logic
+    // ==========================================================
+    const peers = {};             // { socketId: RTCPeerConnection }
+    const peerNames = {};         // { socketId: username }
+    let localStream = null;
+    let inCall = false;
+
+    const rtcConfig = {
+        iceServers: [
+            { urls: 'stun:stun.l.google.com:19302' },
+            { urls: 'stun:stun1.l.google.com:19302' }
+        ]
+    };
+
+    // --- UI element refs ---
+    const startBtn     = document.getElementById('start-call-btn');
+    const endBtn       = document.getElementById('end-call-btn');
+    const joinBtn      = document.getElementById('join-call-btn');
+    const leaveBtn     = document.getElementById('leave-call-btn');
+    const mediaCtrls   = document.getElementById('media-controls');
+    const statusText   = document.getElementById('call-status-text');
+    const emptyState   = document.getElementById('call-empty-state');
+    const liveBadge    = document.getElementById('call-live-badge');
+
+    // --- Teacher: Start Call ---
+    startBtn?.addEventListener('click', () => {
+        fetch(`/start_call/${classroomId}`, { method: 'POST' })
+            .then(() => {
+                startBtn.classList.add('hidden');
+                endBtn.classList.remove('hidden');
+                beginCall();
+            })
+            .catch(err => alert('Could not start call: ' + err));
+    });
+
+    // --- Teacher: End Call ---
+    endBtn?.addEventListener('click', () => {
+        fetch(`/end_call/${classroomId}`, { method: 'POST' })
+            .then(() => {
+                socket.emit('end_call_signal', { classroom_id: classroomId });
+                endCallUI();
+            })
+            .catch(err => alert('Could not end call: ' + err));
+    });
+
+    // --- Student: Join Call ---
+    joinBtn?.addEventListener('click', () => {
+        joinBtn.classList.add('hidden');
+        leaveBtn.classList.remove('hidden');
+        beginCall();
+    });
+
+    // --- Student: Leave Call ---
+    leaveBtn?.addEventListener('click', () => {
+        endCallUI();
+        joinBtn.classList.remove('hidden');
+        leaveBtn.classList.add('hidden');
+    });
+
+    // --- Server tells us the teacher started a call ---
+    socket.on('call_started', (data) => {
+        if (data.classroom_id !== classroomId) return;
+        statusText.innerHTML = '<i class="fas fa-circle text-emerald-400 text-xs mr-2 animate-pulse"></i>A class call is currently live.';
+        liveBadge.classList.remove('hidden');
+        if (userRole !== 'teacher' && joinBtn) {
+            joinBtn.classList.remove('hidden');
+        }
+    });
+
+    // --- Server tells us the teacher ended the call ---
+    socket.on('call_ended', (data) => {
+        if (data.classroom_id !== classroomId) return;
+        endCallUI();
+        statusText.innerHTML = '<i class="fas fa-circle text-slate-500 text-xs mr-2"></i>No active class call.';
+        liveBadge.classList.add('hidden');
+        // Restore teacher start button
+        if (userRole === 'teacher' && startBtn && endBtn) {
+            startBtn.classList.remove('hidden');
+            endBtn.classList.add('hidden');
+        }
+        // Restore student join button visibility (hidden until new call)
+        if (userRole !== 'teacher' && joinBtn && leaveBtn) {
+            joinBtn.classList.add('hidden');
+            leaveBtn.classList.add('hidden');
+        }
+    });
+
+    // --- Server tells us a new peer joined ---
+    socket.on('new_peer', (data) => {
+        peerNames[data.sid] = data.username;
+        console.log(`New peer: ${data.username}`);
+    });
+
+    // --- Server forwards a WebRTC signal (offer/answer/ICE) ---
+    socket.on('signal', async (data) => {
+        const peerId = data.from;
+        const signal = data.signal;
+        if (!signal) return;
+
+        // Ensure a peer connection exists (the newcomer may not have one yet)
+        if (!peers[peerId]) {
+            await createPeerConnection(peerId, false);
+        }
+        const peer = peers[peerId];
+
+        try {
+            if (signal.type === 'offer') {
+                await peer.setRemoteDescription(new RTCSessionDescription(signal));
+                const answer = await peer.createAnswer();
+                await peer.setLocalDescription(answer);
+                socket.emit('signal', { classroom_id: classroomId, signal: answer });
+            } else if (signal.type === 'answer') {
+                await peer.setRemoteDescription(new RTCSessionDescription(signal));
+            } else if (signal.candidate) {
+                await peer.addIceCandidate(new RTCIceCandidate(signal));
+            }
+        } catch (err) {
+            console.error('Signal handling error:', err);
+        }
+    });
+
+    // --- Begin call: get media, join room, connect to existing peers ---
+    async function beginCall() {
+        try {
+            localStream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        } catch (err) {
+            alert('Could not access camera/microphone. Please allow permissions and try again.');
+            console.error(err);
+            return;
+        }
+
+        inCall = true;
+        mediaCtrls.classList.remove('hidden');
+        emptyState.classList.add('hidden');
+        addVideoTile('local', userName + ' (You)', localStream, true);
+
+        // Notify server and other peers
+        socket.emit('join_call', { classroom_id: classroomId });
+
+        // If we are the teacher and there are already peers present,
+        // ask them for their streams by sending offers.
+        // (Handled implicitly when students receive the join_call 'new_peer' event.)
+    }
+
+    // --- Create a peer connection (as offerer or answerer) ---
+    async function createPeerConnection(peerId, isOfferer) {
+        const peer = new RTCPeerConnection(rtcConfig);
+        peers[peerId] = peer;
+
+        // Add our local tracks
+        if (localStream) {
+            localStream.getTracks().forEach(track => peer.addTrack(track, localStream));
+        }
+
+        // Send ICE candidates to the other peer
+        peer.onicecandidate = (event) => {
+            if (event.candidate) {
+                socket.emit('signal', {
+                    classroom_id: classroomId,
+                    signal: event.candidate
+                });
+            }
+        };
+
+        // Receive remote tracks
+        peer.ontrack = (event) => {
+            const remoteStream = event.streams[0];
+            const displayName = peerNames[peerId] || 'Participant';
+            addVideoTile(peerId, displayName, remoteStream, false);
+        };
+
+        // Clean up on disconnect
+        peer.onconnectionstatechange = () => {
+            if (['failed', 'closed', 'disconnected'].includes(peer.connectionState)) {
+                removeVideoTile(peerId);
+                delete peers[peerId];
+            }
+        };
+
+        // If we are the offerer, send an offer
+        if (isOfferer) {
+            const offer = await peer.createOffer();
+            await peer.setLocalDescription(offer);
+            socket.emit('signal', { classroom_id: classroomId, signal: offer });
+        }
+
+        return peer;
+    }
+
+    // --- Add a video tile to the grid ---
+    function addVideoTile(id, label, stream, muted) {
+        // Remove existing tile with same id, if any
+        removeVideoTile(id);
+
+        const tile = document.createElement('div');
+        tile.id = `tile-${id}`;
+        tile.className = 'relative rounded-xl overflow-hidden bg-black aspect-video shadow-lg border border-white/10';
+
+        const video = document.createElement('video');
+        video.srcObject = stream;
+        video.autoplay = true;
+        video.playsInline = true;
+        video.muted = muted;
+        video.className = 'w-full h-full object-cover';
+
+        const nameTag = document.createElement('span');
+        nameTag.className = 'absolute bottom-2 left-2 bg-black/70 backdrop-blur-sm px-2 py-1 rounded-md text-xs text-white';
+        nameTag.textContent = label;
+
+        tile.appendChild(video);
+        tile.appendChild(nameTag);
+        document.getElementById('video-grid').appendChild(tile);
+    }
+
+    function removeVideoTile(id) {
+        const tile = document.getElementById(`tile-${id}`);
+        if (tile) tile.remove();
+    }
+
+    // --- Tear down the call UI and connections ---
+    function endCallUI() {
+        inCall = false;
+
+        if (localStream) {
+            localStream.getTracks().forEach(t => t.stop());
+            localStream = null;
+        }
+
+        Object.keys(peers).forEach(id => {
+            try { peers[id].close(); } catch (e) {}
+            delete peers[id];
+        });
+
+        document.getElementById('video-grid').innerHTML = '';
+        emptyState.classList.remove('hidden');
+        mediaCtrls.classList.add('hidden');
+    }
+
+    // --- Media toggle buttons ---
+    document.getElementById('toggle-mic')?.addEventListener('click', () => {
+        if (!localStream) return;
+        const track = localStream.getAudioTracks()[0];
+        if (!track) return;
+        track.enabled = !track.enabled;
+        document.getElementById('mic-icon').className = track.enabled ? 'fas fa-microphone' : 'fas fa-microphone-slash';
+    });
+
+    document.getElementById('toggle-cam')?.addEventListener('click', () => {
+        if (!localStream) return;
+        const track = localStream.getVideoTracks()[0];
+        if (!track) return;
+        track.enabled = !track.enabled;
+        document.getElementById('cam-icon').className = track.enabled ? 'fas fa-video' : 'fas fa-video-slash';
+    });
+
+    // --- If a call was already active when the page loaded, show it ---
+    if (initialCallActive) {
+        liveBadge.classList.remove('hidden');
+    }
 </script>
+
 {% endblock %}

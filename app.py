@@ -216,7 +216,10 @@ def auth_google():
         redirect_to = url_for('auth_callback', _external=True)
         res = supabase.auth.sign_in_with_oauth({
             "provider": "google",
-            "options": {"redirect_to": redirect_to}
+            "options": {
+                "redirect_to": redirect_to,
+                "scopes": "https://www.googleapis.com/auth/userinfo.email"
+            }
         })
         return redirect(res.url)
     except Exception as e:
@@ -322,11 +325,16 @@ def classroom(classroom_id):
     assignments = supabase.table('assignments').select('*').eq('classroom_id', classroom_id).order('due_date', desc=True).execute()
     messages = supabase.table('messages').select('*, profiles(full_name)').eq('classroom_id', classroom_id).order('created_at', desc=True).limit(50).execute()
 
+    # Check if there is an active call for this classroom
+    active_call_data = supabase.table('class_calls').select('*').eq('classroom_id', classroom_id).eq('is_active', True).execute()
+    active_call = active_call_data.data[0] if active_call_data.data else None
+
     return render_template('classroom.html',
                          classroom=classroom.data,
                          announcements=announcements.data,
                          assignments=assignments.data,
-                         messages=messages.data[::-1])
+                         messages=messages.data[::-1],
+                         active_call=active_call)
 
 
 # ============================================================
@@ -439,6 +447,63 @@ def create_assignment(classroom_id):
         flash('Assignment created!', 'success')
     except Exception as e:
         flash(f'Error: {str(e)}', 'danger')
+
+    return redirect(url_for('classroom', classroom_id=classroom_id))
+
+
+# ============================================================
+# 📹 VIDEO / VOICE CALL ROUTES
+# ============================================================
+@app.route('/start_call/<int:classroom_id>', methods=['POST'])
+@login_required
+def start_call(classroom_id):
+    """Teacher-only: start a new class call and mark the classroom as live."""
+    if session['profile']['role'] != 'teacher':
+        flash('Only teachers can start a class call.', 'danger')
+        return redirect(url_for('classroom', classroom_id=classroom_id))
+
+    try:
+        # End any existing active call for this classroom
+        supabase.table('class_calls').update({'is_active': False}).eq('classroom_id', classroom_id).execute()
+
+        # Create a new active call
+        supabase.table('class_calls').insert({
+            "classroom_id": classroom_id,
+            "started_by": session['user']['id']
+        }).execute()
+
+        # Notify students in the classroom that a call has started
+        socketio.emit('call_started', {
+            'classroom_id': classroom_id,
+            'started_by': session['profile']['full_name']
+        }, room=f"classroom_{classroom_id}")
+
+        flash('Class call started. Students can now join.', 'success')
+    except Exception as e:
+        flash(f'Error starting call: {str(e)}', 'danger')
+
+    return redirect(url_for('classroom', classroom_id=classroom_id))
+
+
+@app.route('/end_call/<int:classroom_id>', methods=['POST'])
+@login_required
+def end_call(classroom_id):
+    """Teacher-only: end the active class call."""
+    if session['profile']['role'] != 'teacher':
+        flash('Only teachers can end a class call.', 'danger')
+        return redirect(url_for('classroom', classroom_id=classroom_id))
+
+    try:
+        supabase.table('class_calls').update({'is_active': False}).eq('classroom_id', classroom_id).execute()
+
+        # Notify everyone in the call that it has ended
+        socketio.emit('call_ended', {
+            'classroom_id': classroom_id
+        }, room=f"call_{classroom_id}")
+
+        flash('Class call ended.', 'success')
+    except Exception as e:
+        flash(f'Error ending call: {str(e)}', 'danger')
 
     return redirect(url_for('classroom', classroom_id=classroom_id))
 
@@ -569,8 +634,10 @@ def admin_delete_code(code_id):
 
 
 # ============================================================
-# 💬 SOCKET.IO EVENTS (Real-time chat)
+# 💬 SOCKET.IO EVENTS — Real-time chat + WebRTC signaling
 # ============================================================
+
+# --- Chat: room join/leave ---
 @socketio.on('join')
 def on_join(data):
     username = session.get('profile', {}).get('full_name', 'Anonymous')
@@ -608,6 +675,44 @@ def handle_message(data):
         'message': message,
         'timestamp': datetime.now().strftime('%H:%M')
     }, room=room)
+
+
+# --- WebRTC signaling: join/leave call, exchange offer/answer/ICE ---
+@socketio.on('join_call')
+def on_join_call(data):
+    classroom_id = data.get('classroom_id')
+    room = f"call_{classroom_id}"
+    username = session.get('profile', {}).get('full_name', 'Anonymous')
+    join_room(room)
+
+    # Tell everyone else in the room that a new peer has joined
+    emit('new_peer', {
+        'username': username,
+        'sid': request.sid
+    }, room=room, include_self=False)
+
+    print(f"{username} joined call room: {room}")
+
+
+@socketio.on('signal')
+def on_signal(data):
+    """Forward WebRTC offers, answers, and ICE candidates to other peers."""
+    classroom_id = data.get('classroom_id')
+    room = f"call_{classroom_id}"
+
+    emit('signal', {
+        'from': request.sid,
+        'signal': data.get('signal')
+    }, room=room, include_self=False)
+
+
+@socketio.on('end_call_signal')
+def on_end_call_signal(data):
+    """Notify all peers in the call that it has ended."""
+    classroom_id = data.get('classroom_id')
+    room = f"call_{classroom_id}"
+
+    emit('call_ended', {'classroom_id': classroom_id}, room=room)
 
 
 # ============================================================
